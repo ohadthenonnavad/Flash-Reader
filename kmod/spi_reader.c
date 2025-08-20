@@ -94,26 +94,44 @@ static bool did_in_platform(const struct spi_platform *p, u16 did)
 static int select_platform_by_pci(void)
 {
     u32 idx;
-    struct pci_dev *pdev = NULL;
+    struct pci_dev *isa = NULL;
+    u16 did = 0;
     curp = NULL;
+
+    /* Obtain PCH Device ID from the ISA bridge (class BRIDGE_ISA, typically 00:1f.0) */
+    isa = pci_get_class(PCI_CLASS_BRIDGE_ISA << 8, NULL);
+    if (!isa) {
+        pr_warn("[spi_reader] ISA bridge (class 0x0601) not found; cannot determine platform DID\n");
+        return -ENODEV;
+    }
+    did = isa->device;
+
     for (idx = 0; idx < g_spi_platforms_count; ++idx) {
         const struct spi_platform *p = &g_spi_platforms[idx];
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,10,0)
-        pdev = pci_get_domain_bus_and_slot(0, (u8)p->bar->bus, PCI_DEVFN((u8)p->bar->dev, (u8)p->bar->fun));
-#else
-        pdev = pci_get_bus_and_slot((u8)p->bar->bus, PCI_DEVFN((u8)p->bar->dev, (u8)p->bar->fun));
-#endif
-        if (!pdev)
+        if (!did_in_platform(p, did))
             continue;
-        if (did_in_platform(p, pdev->device)) {
-            curp = p;
-            spi_pdev = pdev; /* keep reference */
-            pr_info("[spi_reader] matched platform %s by DID 0x%04x at %02x:%02x.%x\n", p->sku, pdev->device, p->bar->bus, p->bar->dev, p->bar->fun);
-            return 0;
+
+        /* Bind to the SPIBAR device at the platform-specified function (e.g., 00:1f.5) */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,10,0)
+        spi_pdev = pci_get_domain_bus_and_slot(0, (u8)p->bar->bus, PCI_DEVFN((u8)p->bar->dev, (u8)p->bar->fun));
+#else
+        spi_pdev = pci_get_bus_and_slot((u8)p->bar->bus, PCI_DEVFN((u8)p->bar->dev, (u8)p->bar->fun));
+#endif
+        if (!spi_pdev) {
+            pr_warn("[spi_reader] Platform %s matched by DID 0x%04x, but SPI device %02x:%02x.%x not present\n",
+                    p->sku, did, p->bar->bus, p->bar->dev, p->bar->fun);
+            continue;
         }
-        pci_dev_put(pdev);
+
+        curp = p;
+        pr_info("[spi_reader] matched platform %s by ISA DID 0x%04x; SPIBAR at %02x:%02x.%x\n",
+                p->sku, did, p->bar->bus, p->bar->dev, p->bar->fun);
+        pci_dev_put(isa); /* drop ISA reference, keep spi_pdev */
+        return 0;
     }
-    pr_warn("[spi_reader] No matching platform by device id; will attempt fallback\n");
+
+    pci_dev_put(isa);
+    pr_warn("[spi_reader] No matching platform for ISA DID 0x%04x; will attempt fallback\n", did);
     return -ENODEV;
 }
 #endif

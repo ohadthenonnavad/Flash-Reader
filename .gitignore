@@ -1,0 +1,16 @@
+# Build artifacts
+kmod/*.o
+kmod/*.ko
+kmod/*.mod
+kmod/*.mod.*
+kmod/.*.cmd
+kmod/Module.symvers
+kmod/modules.order
+kmod/*.symvers
+kmod/*.order
+kmod/*.cmd
+kmod/.module-common.o
+kmod/.spi_reader.*
+*.pyc
+__pycache__/
+flash_general_framework.zip

@@ -11,6 +11,11 @@ ifneq ($(KERNELRELEASE),)
 obj-m := spi_reader.o
 ccflags-y += -Wall -Wextra -Wno-unused-parameter
 
+# Propagate multi-platform define from outer make
+ifdef MULTI_PLAT
+ccflags-y += -DMULTI_PLAT
+endif
+
 else
 # external make
 
@@ -29,8 +34,9 @@ ifeq ($(strip $(PCHS)),)
 OUT_HDR := $(OUT_HDR_SINGLE)
 else
 OUT_HDR := $(OUT_HDR_MULTI)
-ccflags-y += -DMULTI_PLAT
 endif
+
+export MULTI_PLAT := $(if $(PCHS),1)
 
 all: $(OUT_HDR)
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
