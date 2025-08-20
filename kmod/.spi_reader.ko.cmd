@@ -1,0 +1,1 @@
+savedcmd_spi_reader.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T /usr/src/linux-headers-6.14.0-27-generic/scripts/module.lds -o spi_reader.ko spi_reader.o spi_reader.mod.o .module-common.o

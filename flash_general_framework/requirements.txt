@@ -1,0 +1,5 @@
+# Python requirements for generators
+# Generators primarily use Python stdlib. CHIPSEC is optional and only used
+# for constant values if available.
+# To include CHIPSEC-derived constants, install chipsec:
+# chipsec>=1.7.0
