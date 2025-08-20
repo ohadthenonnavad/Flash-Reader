@@ -104,7 +104,8 @@ static int select_platform_by_pci(void)
         pr_warn("[spi_reader] ISA bridge (class 0x0601) not found; cannot determine platform DID\n");
         return -ENODEV;
     }
-    did = isa->device;
+    /* Ensure DID is host-endian explicitly */
+    did = (u16)le16_to_cpu(isa->device);
 
     for (idx = 0; idx < g_spi_platforms_count; ++idx) {
         const struct spi_platform *p = &g_spi_platforms[idx];

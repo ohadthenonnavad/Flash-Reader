@@ -5,7 +5,7 @@ Utilities and install steps to generate precompiled SPIBAR offsets and SPI regis
 ## Directory Layout
 - `flash_general_framework/`
   - `gen_multi_spi_offsets.py` — Generate multi-platform header `kmod/include/gen_multi_spi_offsets.h`.
-  - `gen_pch_spi_offsets.py` — Thin shim importing the legacy single-platform parser from `tools/`.
+  - `gen_pch_spi_offsets.py` — Self-contained single-platform helpers used by the multi-generator.
   - `requirements.txt` — Optional Python dependencies (mostly stdlib; CHIPSEC optional).
   - `install.sh` — Checks prerequisites, optionally installs Python deps, and records CHIPSEC cfg root.
 - `kmod/` — Linux kernel module `spi_reader` that consumes the generated header.

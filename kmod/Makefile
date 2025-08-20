@@ -1,7 +1,7 @@
 # Out-of-tree kernel module to read SPI flash using precompiled offsets from CHIPSEC XMLs
 # Usage:
 #   make PCH=Q170 KDIR=/lib/modules/$(shell uname -r)/build
-# Or multi-platform:
+# Multi-platform (also supports single by passing one entry):
 #   make PCHS=Q170,AVN KDIR=/lib/modules/$(shell uname -r)/build
 # Optional:
 #   CFG_ROOT=/path/to/chipsec/cfg (defaults to ../chipsec/chipsec/cfg relative to this Makefile)
@@ -19,41 +19,35 @@ endif
 else
 # external make
 
-PCH ?= Q170
-PCHS ?=
+PCH ?=
+PCHS ?= Q170
 CFG_ROOT ?= $(abspath $(CURDIR)/../chipsec/chipsec/cfg)
-OUT_HDR_SINGLE := $(CURDIR)/include/gen_pch_spi_offsets.h
-OUT_HDR_MULTI  := $(CURDIR)/include/gen_multi_spi_offsets.h
-GEN_SINGLE := $(abspath $(CURDIR)/../flash_general_framework/gen_pch_spi_offsets.py)
-GEN_MULTI  := $(abspath $(CURDIR)/../flash_general_framework/gen_multi_spi_offsets.py)
+OUT_HDR  := $(CURDIR)/include/gen_multi_spi_offsets.h
+GEN_MULTI := $(abspath $(CURDIR)/../flash_general_framework/gen_multi_spi_offsets.py)
 
 KDIR ?= /lib/modules/$(shell uname -r)/build
 PWD  := $(shell pwd)
 
+# Back-compat: allow PCH=... and map it to PCHS if PCHS not set
 ifeq ($(strip $(PCHS)),)
-OUT_HDR := $(OUT_HDR_SINGLE)
-else
-OUT_HDR := $(OUT_HDR_MULTI)
+  ifneq ($(strip $(PCH)),)
+    PCHS := $(PCH)
+  endif
 endif
 
-export MULTI_PLAT := $(if $(PCHS),1)
+export MULTI_PLAT := 1
 
 all: $(OUT_HDR)
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
-$(OUT_HDR_SINGLE): $(GEN_SINGLE)
-	@mkdir -p $(dir $(OUT_HDR_SINGLE))
-	@echo "[gen] PCH=$(PCH) CFG_ROOT=$(CFG_ROOT) -> $@"
-	python3 $(GEN_SINGLE) --pch $(PCH) --cfg-root $(CFG_ROOT) -o $(OUT_HDR_SINGLE)
-
-$(OUT_HDR_MULTI): $(GEN_MULTI)
-	@mkdir -p $(dir $(OUT_HDR_MULTI))
+$(OUT_HDR): $(GEN_MULTI)
+	@mkdir -p $(dir $(OUT_HDR))
 	@echo "[gen] PCHS=$(PCHS) CFG_ROOT=$(CFG_ROOT) -> $@"
-	python3 $(GEN_MULTI) --pchs $(PCHS) --cfg-root $(CFG_ROOT) -o $(OUT_HDR_MULTI)
+	python3 $(GEN_MULTI) --pchs $(PCHS) --cfg-root $(CFG_ROOT) -o $(OUT_HDR)
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
-	@rm -f $(OUT_HDR_SINGLE) $(OUT_HDR_MULTI)
+	@rm -f $(OUT_HDR)
 
 .PHONY: all clean
 
