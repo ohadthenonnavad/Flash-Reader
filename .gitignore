@@ -14,3 +14,14 @@ kmod/.spi_reader.*
 *.pyc
 __pycache__/
 flash_general_framework.zip
+# Build artifacts
+kmod/*.o
+kmod/*.ko
+kmod/*.mod
+kmod/*.mod.*
+kmod/.*.cmd
+kmod/Module.symvers
+kmod/modules.order
+*.pyc
+__pycache__/
+flash_general_framework.zip
